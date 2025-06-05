@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json
 import numpy as np
@@ -204,7 +203,7 @@ texto_completo = todas_portarias_maio[numero_portaria]['conteudo']
 st.text(texto_completo)
 
 st.markdown("### Descrição da portaria selecionada:")
-texto_resumo = todas_portarias_maio[portaria_id]["resumo"]
+texto_resumo = todas_portarias_maio[numero_portaria]["resumo"]
 st.text(texto_resumo)
 
 # Visualização de entidades
