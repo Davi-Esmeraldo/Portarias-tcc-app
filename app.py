@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json
 import numpy as np
@@ -43,7 +44,7 @@ colors = {
 # ========== Funções Auxiliares ==========
 
 def visualizar_anotacoes_manuaais(numero_portaria):
-    texto = todas_portarias_maio[numero_portaria]['conteudo']
+    texto = todas_portarias_maio[numero_portaria]['resumo']
     ents = []
     for entidade in dict_combined[numero_portaria]:
         span = {
@@ -59,15 +60,22 @@ def visualizar_anotacoes_manuaais(numero_portaria):
     components.html(html, height=300, scrolling=True)
 
 def visualizar_entidades_preditas(numero_portaria):
-    texto = todas_portarias_maio[numero_portaria]['conteudo']
+    texto = todas_portarias_maio[numero_portaria]['resumo']
+    tokens = texto.split()
     ents = []
-    for entidade in resultados_entidades_final[numero_portaria]:
-        span = {
-            "start": entidade["start"],
-            "end": entidade["end"],
-            "label": entidade["label"]
-        }
-        ents.append(span)
+    idx = 0
+
+    for token, label in resultados_entidades_final[numero_portaria]:
+        start = texto.find(token, idx)
+        if start == -1:
+            continue
+        end = start + len(token)
+        idx = end
+        ents.append({
+            "start": start,
+            "end": end,
+            "label": label.split('-')[-1]  # Remove B- ou I-
+        })
 
     doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
 
