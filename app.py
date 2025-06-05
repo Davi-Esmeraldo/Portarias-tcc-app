@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json
 import numpy as np
@@ -12,23 +13,13 @@ from spacy.util import filter_spans
 from spacy import displacy
 import streamlit.components.v1 as components
 from wordcloud import WordCloud
-import spacy_streamlit
 import plotly.express as px
 import plotly.graph_objects as go
-
-
-
 
 # ========== Carregamento dos dados ==========
 
 with open("todas_portarias_maio.json", encoding='utf-8') as f:
     todas_portarias_maio = json.load(f)
-
-#with open("resultados_entidades.json", encoding='utf-8') as f:
-#    resultados_entidades = json.load(f)
-
-#with open("labels_ren_resumo.json", encoding='utf-8') as f:
-#    labels_ren_resumo = json.load(f)
 
 with open("vetores_fasttext.json", encoding='utf-8') as f:
     vetores_fasttext = json.load(f)
@@ -36,7 +27,53 @@ with open("vetores_fasttext.json", encoding='utf-8') as f:
 with open("portarias_processadas.json", encoding='utf-8') as f:
     portarias_processadas = json.load(f)
 
-# ========== Funções auxiliares / Manipulações ==========
+with open("dict_combined.json", encoding='utf-8') as f:
+    dict_combined = json.load(f)
+
+with open("resultados_entidades_final.json", encoding='utf-8') as f:
+    resultados_entidades_final = json.load(f)
+
+# ========== Cores para as Entidades ==========
+colors = {
+    "ACAO": "#FF9999",      # rosa claro
+    "SUJEITO": "#66CCFF",   # azul claro
+    "LOCAL": "#99CC66",     # verde claro
+    "DATA": "#CE93D8"       # lilás
+}
+
+# ========== Funções Auxiliares ==========
+
+def visualizar_anotacoes_manuaais(numero_portaria):
+    texto = todas_portarias_maio[numero_portaria]['conteudo']
+    ents = []
+    for entidade in dict_combined[numero_portaria]:
+        span = {
+            "start": entidade["start"],
+            "end": entidade["end"],
+            "label": entidade["label"]
+        }
+        ents.append(span)
+
+    doc = {"text": texto, "ents": ents, "title": f"Anotações Manuais - Portaria {numero_portaria}"}
+
+    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
+    components.html(html, height=300, scrolling=True)
+
+def visualizar_entidades_preditas(numero_portaria):
+    texto = todas_portarias_maio[numero_portaria]['conteudo']
+    ents = []
+    for entidade in resultados_entidades_final[numero_portaria]:
+        span = {
+            "start": entidade["start"],
+            "end": entidade["end"],
+            "label": entidade["label"]
+        }
+        ents.append(span)
+
+    doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
+
+    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
+    components.html(html, height=300, scrolling=True)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
     if numero_desejado not in vetores_fasttext:
@@ -49,8 +86,7 @@ def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio,
     similaridades = cosine_similarity(vetor_base, todos_vetores).flatten()
     df = pd.DataFrame({'numero': todos_ids, 'similaridade': similaridades})
     df = df[df['numero'] != numero_desejado].sort_values(by='similaridade', ascending=False).head(top_n)
-    
-    # Adiciona coluna com o texto
+
     textos = []
     for num in df['numero']:
         if num in todas_portarias_maio:
@@ -58,23 +94,19 @@ def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio,
         else:
             textos.append("Texto não encontrado.")
     df['texto_portaria'] = textos
-    
-    return df[['numero', 'similaridade', 'texto_portaria']]
 
+    return df[['numero', 'similaridade', 'texto_portaria']]
 
 def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
 
-    # Redução de dimensionalidade
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(X)
 
-    # Clustering
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
     clusters = kmeans.labels_
 
-    # DataFrame para plot
     df_plot = pd.DataFrame({
         'PCA1': X_pca[:, 0],
         'PCA2': X_pca[:, 1],
@@ -82,14 +114,11 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         'Número': numeros
     })
 
-    # Identifica a portaria selecionada
     df_plot['Selecionado'] = df_plot['Número'] == numero_desejado
     df_plot['Tamanho'] = df_plot['Selecionado'].apply(lambda x: 16 if x else 8)
 
-    # Cores contrastantes
     color_discrete_sequence = px.colors.qualitative.Bold
 
-    # Gráfico principal
     fig = px.scatter(
         df_plot,
         x='PCA1',
@@ -101,13 +130,11 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         color_discrete_sequence=color_discrete_sequence
     )
 
-    # Todos como círculos com tooltip padronizado
     fig.update_traces(
         marker=dict(symbol='circle', line=dict(width=1, color='DarkSlateGrey')),
         hovertemplate="Portaria: %{customdata[0]}<br>Cluster: %{customdata[1]}<extra></extra>"
     )
 
-    # Adiciona ponto da portaria selecionada destacado em vermelho
     df_selected = df_plot[df_plot['Selecionado']]
     if not df_selected.empty:
         selected = df_selected.iloc[0]
@@ -124,7 +151,6 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
             )
         )
 
-    # Ajuste na legenda
     fig.update_layout(
         legend_title_text='Cluster',
         hoverlabel=dict(
@@ -136,7 +162,6 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     )
 
     st.plotly_chart(fig, use_container_width=True)
-
 
 def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     numeros = list(vetores_fasttext.keys())
@@ -153,10 +178,9 @@ def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     for cluster_id in sorted(df_clusters['Cluster'].unique()):
         st.markdown(f"#### Nuvem de Palavras - Cluster {cluster_id}")
         numeros_cluster = df_clusters[df_clusters['Cluster'] == cluster_id]['Número']
-        
-        # Concatenar textos das portarias deste cluster
+
         textos = " ".join([todas_portarias_maio[num]['resumo'] for num in numeros_cluster if num in todas_portarias_maio])
-        
+
         if textos.strip() != "":
             wordcloud = WordCloud(width=800, height=400, background_color='white').generate(textos)
             fig, ax = plt.subplots(figsize=(10, 5))
@@ -165,7 +189,6 @@ def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
             st.pyplot(fig)
         else:
             st.write("Sem texto suficiente para gerar nuvem.")
-
 
 # ========== Interface Streamlit ==========
 
@@ -176,22 +199,27 @@ numero_portaria = st.selectbox(
     sorted(todas_portarias_maio.keys(), key=lambda x: int(x), reverse=True)
 )
 
-
-# Descrição da portaria e Entidades reconhecidas
-
-
-
-# Mostrar texto completo
 st.markdown("### Conteúdo da portaria selecionada:")
 texto_completo = todas_portarias_maio[numero_portaria]['conteudo']
-st.text(texto_completo)  
+st.text(texto_completo)
+
+st.markdown("### Descrição da portaria selecionada:")
+texto_resumo = todas_portarias_maio[portaria_id]["resumo"]
+st.text(texto_resumo)
+
+# Visualização de entidades
+st.markdown("### Visualização de Entidades:")
+
+if numero_portaria in dict_combined:
+    visualizar_anotacoes_manuaais(numero_portaria)
+
+if numero_portaria in resultados_entidades_final:
+    visualizar_entidades_preditas(numero_portaria)
 
 # Mostrar similares
 st.markdown("### Portarias mais similares:")
-
 df_similares = encontrar_similares(numero_portaria, vetores_fasttext, todas_portarias_maio)
 
-# Renomear colunas
 df_similares = df_similares.rename(columns={'numero': 'Portaria', 'similaridade': 'Similaridade', 'texto_portaria': 'Conteúdo'})
 
 for idx, row in df_similares.iterrows():
@@ -199,11 +227,8 @@ for idx, row in df_similares.iterrows():
     with st.expander("Ver conteúdo"):
         st.write(row['Conteúdo'])
 
-
-# Mostrar gráfico de clusterização
 st.markdown("### Visualização de Clusters:")
 gerar_grafico_clusters_plotly(vetores_fasttext, numero_portaria)
-
 
 st.markdown("### Nuvens de Palavras por Cluster:")
 gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio)
