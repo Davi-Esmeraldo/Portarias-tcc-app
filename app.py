@@ -44,16 +44,24 @@ colors = {
 def visualizar_anotacoes_manuaais(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
     ents = []
-    for entidade in dict_combined[numero_portaria]:
+    idx = 0
+    for entidade in dict_combined[numero_portaria]['labels']:
+        entidade_texto = entidade["text"]
+        start = texto.find(entidade_texto, idx)
+        if start == -1:
+            continue
+        end = start + len(entidade_texto)
+        idx = end  # atualiza idx para evitar encontrar a mesma substring
         span = {
-            "start": entidade["start"],
-            "end": entidade["end"],
+            "start": start,
+            "end": end,
             "label": entidade["label"]
         }
         ents.append(span)
     doc = {"text": texto, "ents": ents, "title": f"Anotações Manuais - Portaria {numero_portaria}"}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
     components.html(html, height=300, scrolling=True)
+
 
 def visualizar_entidades_preditas(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
