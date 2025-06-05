@@ -6,3 +6,13 @@ matplotlib
 spacy
 wordcloud
 spacy_streamlit
+json
+sklearn.metrics.pairwise
+sklearn.decomposition
+sklearn.cluster
+matplotlib.pyplot
+spacy.tokens
+spacy.util
+streamlit.components.v1
+plotly.express
+plotly.graph_objects
