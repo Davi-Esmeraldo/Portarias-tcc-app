@@ -43,31 +43,6 @@ colors = {
 
 # ========== Funções Auxiliares ==========
 
-def agrupar_spans_consecutivos(texto, spans):
-    if not spans:
-        return []
-
-    # Ordenar os spans por posição inicial
-    spans = sorted(spans, key=lambda x: x['start'])
-    
-    agrupados = []
-    atual = spans[0]
-
-    for span in spans[1:]:
-        # Se o span atual for consecutivo e do mesmo tipo
-        if atual['end'] == span['start'] and atual['label'] == span['label']:
-            # Expandir o span atual
-            atual['end'] = span['end']
-        else:
-            # Salvar o span agrupado e começar um novo
-            agrupados.append(atual)
-            atual = span
-
-    # Adiciona o último span
-    agrupados.append(atual)
-
-    return agrupados
-
    
 def visualizar_anotacoes_manuaais(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
@@ -80,10 +55,7 @@ def visualizar_anotacoes_manuaais(numero_portaria):
         }
         ents.append(span)
 
-    # Agrupar entidades consecutivas
-    ents_agrupadas = agrupar_spans_consecutivos(texto, ents)
-
-
+  
     doc = {"text": texto, "ents": ents}
 
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
@@ -91,21 +63,21 @@ def visualizar_anotacoes_manuaais(numero_portaria):
 
 def visualizar_entidades_preditas(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
-    #tokens = texto.split()
+    tokens = texto.split()
     ents = []
-    #idx = 0
+    idx = 0
 
-    #for token, label in resultados_entidades_final[numero_portaria]:
-    #    start = texto.find(token, idx)
-    #    if start == -1:
-    #        continue
-    #    end = start + len(token)
-    #    idx = end
-    #    ents.append({
-    #        "start": start,
-    #        "end": end,
-    #        "label": label.split('-')[-1]  # Remove B- ou I-
-    #    })
+    for token, label in resultados_entidades_final[numero_portaria]:
+        start = texto.find(token, idx)
+        if start == -1:
+            continue
+        end = start + len(token)
+        idx = end
+        ents.append({
+            "start": start,
+            "end": end,
+            "label": label.split('-')[-1]  # Remove B- ou I-
+        })
 
     for entidade in resultados_entidades_final[numero_portaria]:
         span = {
@@ -115,9 +87,7 @@ def visualizar_entidades_preditas(numero_portaria):
         }
         ents.append(span)
 
-    # Agrupar entidades consecutivas
-    ents_agrupadas = agrupar_spans_consecutivos(texto, ents)
-
+    
     doc = {"text": texto, "ents": ents}
 
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
