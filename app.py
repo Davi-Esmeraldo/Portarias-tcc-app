@@ -1,8 +1,3 @@
-# VERSÃO A SER HOSPEDADA
-# plotily
-# Versão sem REN
-# VERSÃO FINAL ADD REN
-
 import streamlit as st
 import json
 import numpy as np
