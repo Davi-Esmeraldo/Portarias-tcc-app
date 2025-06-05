@@ -5,3 +5,4 @@ scikit-learn
 matplotlib
 spacy
 wordcloud
+spacy_streamlit
