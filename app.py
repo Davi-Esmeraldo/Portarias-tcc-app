@@ -1,5 +1,5 @@
 import streamlit as st
-import json
+import json 
 import numpy as np
 import pandas as pd
 from sklearn.metrics.pairwise import cosine_similarity
@@ -68,17 +68,42 @@ def visualizar_entidades_preditas(numero_portaria):
     tokens = texto.split()
     ents = []
     idx = 0
+    entidade_atual = None
+    inicio = None
+    label_atual = None
+
     for token, label in resultados_entidades_final[numero_portaria]:
+        tipo_entidade = label.split('-')[-1]  # remove B- ou I-
         start = texto.find(token, idx)
         if start == -1:
             continue
         end = start + len(token)
+
+        if label.startswith('B-') or (label_atual != tipo_entidade):
+            # Se já estávamos em uma entidade, salva ela
+            if entidade_atual:
+                ents.append({
+                    "start": inicio,
+                    "end": idx,
+                    "label": label_atual
+                })
+            # Inicia nova entidade
+            entidade_atual = token
+            inicio = start
+            label_atual = tipo_entidade
+        else:
+            entidade_atual += " " + token
+
         idx = end
+
+    # Salva última entidade
+    if entidade_atual:
         ents.append({
-            "start": start,
-            "end": end,
-            "label": label.split('-')[-1]  # Remove B- ou I-
+            "start": inicio,
+            "end": idx,
+            "label": label_atual
         })
+
     doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
     components.html(html, height=300, scrolling=True)
