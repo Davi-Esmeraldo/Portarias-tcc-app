@@ -1,3 +1,5 @@
+# texto em branco
+
 import streamlit as st
 import json 
 import numpy as np
@@ -41,25 +43,23 @@ colors = {
 
 # ========== Funções Auxiliares ==========
 
-def visualizar_anotacoes_manuaais(numero_portaria):
+def visualizar_anotacoes_manuais(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
     ents = []
-    idx = 0
-    for entidade in dict_combined[numero_portaria]['labels']:
-        entidade_texto = entidade["text"]
-        start = texto.find(entidade_texto, idx)
-        if start == -1:
-            continue
-        end = start + len(entidade_texto)
-        idx = end  # atualiza idx para evitar encontrar a mesma substring
-        span = {
-            "start": start,
-            "end": end,
-            "label": entidade["label"]
-        }
-        ents.append(span)
+    for entidade in anotacoes_manuais[numero_portaria]:
+        ents.append({
+            "start": entidade['start'],
+            "end": entidade['end'],
+            "label": entidade['label']
+        })
     doc = {"text": texto, "ents": ents, "title": f"Anotações Manuais - Portaria {numero_portaria}"}
-    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
+    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors, "bg": "#1e1e1e"}, page=True)
+
+    html = html.replace(
+        "<style>",
+        "<style> body { color: white !important; background-color: #1e1e1e; } .entity, .title { color: white !important; }"
+    )
+
     components.html(html, height=300, scrolling=True)
 
 
@@ -73,21 +73,19 @@ def visualizar_entidades_preditas(numero_portaria):
     label_atual = None
 
     for token, label in resultados_entidades_final[numero_portaria]:
-        tipo_entidade = label.split('-')[-1]  # remove B- ou I-
+        tipo_entidade = label.split('-')[-1]
         start = texto.find(token, idx)
         if start == -1:
             continue
         end = start + len(token)
 
         if label.startswith('B-') or (label_atual != tipo_entidade):
-            # Se já estávamos em uma entidade, salva ela
             if entidade_atual:
                 ents.append({
                     "start": inicio,
                     "end": idx,
                     "label": label_atual
                 })
-            # Inicia nova entidade
             entidade_atual = token
             inicio = start
             label_atual = tipo_entidade
@@ -96,7 +94,6 @@ def visualizar_entidades_preditas(numero_portaria):
 
         idx = end
 
-    # Salva última entidade
     if entidade_atual:
         ents.append({
             "start": inicio,
@@ -105,7 +102,14 @@ def visualizar_entidades_preditas(numero_portaria):
         })
 
     doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
-    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
+    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors, "bg": "#1e1e1e"}, page=True)
+
+    # Modifica a cor do texto via CSS
+    html = html.replace(
+        "<style>",
+        "<style> body { color: white !important; background-color: #1e1e1e; } .entity, .title { color: white !important; }"
+    )
+
     components.html(html, height=300, scrolling=True)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
