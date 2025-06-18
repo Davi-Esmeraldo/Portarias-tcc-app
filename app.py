@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json 
 import numpy as np
@@ -103,20 +102,35 @@ def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio,
     return df[['numero', 'similaridade', 'texto_portaria']]
 
 def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
+    # Preparação dos dados
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
+
+    # PCA para reduzir para 2 dimensões
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(X)
+
+    # Clusterização
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
-    clusters = kmeans.labels_
+    clusters = kmeans.labels_.astype(str)  # Convertendo para string para tratar como categoria
+
+    # Montagem do dataframe
     df_plot = pd.DataFrame({
         'PCA1': X_pca[:, 0],
         'PCA2': X_pca[:, 1],
-        'Cluster': clusters.astype(str),
+        'Cluster': clusters,
         'Número': numeros
     })
+
+    # Sinalizar portaria selecionada
     df_plot['Selecionado'] = df_plot['Número'] == numero_desejado
     df_plot['Tamanho'] = df_plot['Selecionado'].apply(lambda x: 16 if x else 8)
+
+    # Ordenação dos clusters (0,1,2...)
+    ordem_clusters = sorted(df_plot['Cluster'].unique(), key=lambda x: int(x))
+    df_plot['Cluster'] = pd.Categorical(df_plot['Cluster'], categories=ordem_clusters, ordered=True)
+
+    # Criação do gráfico
     fig = px.scatter(
         df_plot,
         x='PCA1',
@@ -125,10 +139,17 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         size='Tamanho',
         custom_data=['Número', 'Cluster'],
         title="Clusterização das Portarias (KMeans + PCA)",
-        color_discrete_sequence=px.colors.qualitative.Bold
+        color_discrete_sequence=px.colors.qualitative.Bold,
+        category_orders={"Cluster": ordem_clusters}
     )
-    fig.update_traces(marker=dict(symbol='circle', line=dict(width=1, color='DarkSlateGrey')),
-                      hovertemplate="Portaria: %{customdata[0]}<br>Cluster: %{customdata[1]}<extra></extra>")
+
+    # Personalização dos pontos e tooltip
+    fig.update_traces(
+        marker=dict(symbol='circle', line=dict(width=1, color='DarkSlateGrey')),
+        hovertemplate="Portaria: %{customdata[0]}<br>Cluster: %{customdata[1]}<extra></extra>"
+    )
+
+    # Destacar portaria selecionada
     df_selected = df_plot[df_plot['Selecionado']]
     if not df_selected.empty:
         selected = df_selected.iloc[0]
@@ -142,8 +163,16 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
             hoverinfo='text',
             showlegend=False
         ))
-    fig.update_layout(legend_title_text='Cluster')
+
+    # Ajuste da legenda
+    fig.update_layout(
+        legend_title_text='Cluster',
+        legend_traceorder="normal"  # Ordem normal da legenda (seguindo a ordem definida)
+    )
+
+    # Exibição no Streamlit
     st.plotly_chart(fig, use_container_width=True)
+
 
 def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     numeros = list(vetores_fasttext.keys())
