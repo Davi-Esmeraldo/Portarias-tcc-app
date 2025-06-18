@@ -1,5 +1,3 @@
-# OK
-
 import streamlit as st
 import json 
 import numpy as np
@@ -165,6 +163,62 @@ def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
         else:
             st.write("Sem texto suficiente para gerar nuvem.")
 
+def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
+    # Preparação dos clusters
+    numeros = list(vetores_fasttext.keys())
+    X = np.array([vetores_fasttext[n] for n in numeros])
+    kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
+    clusters = kmeans.labels_
+
+    # Montagem do dataframe
+    df = pd.DataFrame({
+        'Número': numeros,
+        'Cluster': clusters.astype(str)
+    })
+
+    # Extração da data e do mês
+    datas = []
+    meses = []
+    for num in numeros:
+        if num in todas_portarias_maio and 'data' in todas_portarias_maio[num]:
+            data_str = todas_portarias_maio[num]['data']
+            try:
+                data_dt = pd.to_datetime(data_str, dayfirst=True, errors='coerce')
+                datas.append(data_dt)
+                meses.append(data_dt.strftime('%Y-%m'))  # Ano-Mês
+            except:
+                datas.append(None)
+                meses.append(None)
+        else:
+            datas.append(None)
+            meses.append(None)
+
+    df['Data'] = datas
+    df['Mes'] = meses
+
+    # Agrupamento por mês e cluster
+    df_agrupado = df.groupby(['Mes', 'Cluster']).size().reset_index(name='Quantidade')
+
+    # Ordenação dos meses
+    df_agrupado = df_agrupado.sort_values(by='Mes')
+
+    # Criação do gráfico Plotly
+    fig = px.bar(
+        df_agrupado,
+        x='Mes',
+        y='Quantidade',
+        color='Cluster',
+        barmode='group',
+        title='Quantidade de Portarias por Mês e Cluster',
+        labels={'Mes': 'Mês', 'Quantidade': 'Quantidade de Portarias'},
+        color_discrete_sequence=px.colors.qualitative.Bold
+    )
+    fig.update_layout(xaxis_tickangle=-45)
+
+    st.markdown("### Portarias por Mês e por Cluster")
+    st.plotly_chart(fig, use_container_width=True)
+
+
 # ========== Interface Streamlit ==========
 
 st.title("Visualização e Análise de Portarias")
@@ -203,3 +257,6 @@ gerar_grafico_clusters_plotly(vetores_fasttext, numero_portaria)
 
 st.markdown("### Nuvens de Palavras por Cluster:")
 gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio)
+
+st.markdown("### Evolução Mensal das Portarias por Cluster")
+grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio)
