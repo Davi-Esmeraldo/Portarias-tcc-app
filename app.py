@@ -178,46 +178,59 @@ def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
 
     # Extração da data e do mês
     datas = []
-    meses = []
+    nomes_meses = []
     for num in numeros:
         if num in todas_portarias_maio and 'data' in todas_portarias_maio[num]:
             data_str = todas_portarias_maio[num]['data']
             try:
                 data_dt = pd.to_datetime(data_str, dayfirst=True, errors='coerce')
                 datas.append(data_dt)
-                meses.append(data_dt.strftime('%Y-%m'))  # Ano-Mês
+                if pd.notnull(data_dt):
+                    nomes_meses.append(data_dt.strftime('%B').capitalize())  # Nome do mês por extenso
+                else:
+                    nomes_meses.append('Data inválida')
             except:
                 datas.append(None)
-                meses.append(None)
+                nomes_meses.append('Data inválida')
         else:
             datas.append(None)
-            meses.append(None)
+            nomes_meses.append('Data inválida')
 
     df['Data'] = datas
-    df['Mes'] = meses
+    df['Mês'] = nomes_meses
+
+    # Tradução dos meses para português se necessário
+    mapeamento_meses = {
+        'January': 'Janeiro', 'February': 'Fevereiro', 'March': 'Março', 'April': 'Abril',
+        'May': 'Maio', 'June': 'Junho', 'July': 'Julho', 'August': 'Agosto',
+        'September': 'Setembro', 'October': 'Outubro', 'November': 'Novembro', 'December': 'Dezembro'
+    }
+    df['Mês'] = df['Mês'].replace(mapeamento_meses)
 
     # Agrupamento por mês e cluster
-    df_agrupado = df.groupby(['Mes', 'Cluster']).size().reset_index(name='Quantidade')
+    df_agrupado = df.groupby(['Mês', 'Cluster']).size().reset_index(name='Quantidade')
 
-    # Ordenação dos meses
-    df_agrupado = df_agrupado.sort_values(by='Mes')
+    # Definir ordem dos meses
+    ordem_meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+    df_agrupado['Mês'] = pd.Categorical(df_agrupado['Mês'], categories=ordem_meses, ordered=True)
+    df_agrupado = df_agrupado.sort_values('Mês')
 
     # Criação do gráfico Plotly
     fig = px.bar(
         df_agrupado,
-        x='Mes',
+        x='Mês',
         y='Quantidade',
         color='Cluster',
-        barmode='group',
+        barmode='stack',  # >>> COLUNAS EMPILHADAS
         title='Quantidade de Portarias por Mês e Cluster',
-        labels={'Mes': 'Mês', 'Quantidade': 'Quantidade de Portarias'},
+        labels={'Mês': 'Mês', 'Quantidade': 'Quantidade de Portarias'},
         color_discrete_sequence=px.colors.qualitative.Bold
     )
     fig.update_layout(xaxis_tickangle=-45)
 
-    st.markdown("### Portarias por Mês e por Cluster")
+    st.markdown("### Evolução Mensal das Portarias por Cluster")
     st.plotly_chart(fig, use_container_width=True)
-
 
 # ========== Interface Streamlit ==========
 
