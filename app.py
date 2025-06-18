@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json 
 import numpy as np
@@ -173,7 +174,7 @@ def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     # Montagem do dataframe
     df = pd.DataFrame({
         'Número': numeros,
-        'Cluster': clusters.astype(str)
+        'Cluster': clusters.astype(str)  # Convertendo para string para usar como categoria
     })
 
     # Extração da data e do mês
@@ -186,7 +187,7 @@ def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
                 data_dt = pd.to_datetime(data_str, dayfirst=True, errors='coerce')
                 datas.append(data_dt)
                 if pd.notnull(data_dt):
-                    nomes_meses.append(data_dt.strftime('%B').capitalize())  # Nome do mês por extenso
+                    nomes_meses.append(data_dt.strftime('%B').capitalize())  # Nome do mês
                 else:
                     nomes_meses.append('Data inválida')
             except:
@@ -199,7 +200,7 @@ def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     df['Data'] = datas
     df['Mês'] = nomes_meses
 
-    # Tradução dos meses para português se necessário
+    # Tradução dos meses para português
     mapeamento_meses = {
         'January': 'Janeiro', 'February': 'Fevereiro', 'March': 'Março', 'April': 'Abril',
         'May': 'Maio', 'June': 'Junho', 'July': 'Julho', 'August': 'Agosto',
@@ -214,7 +215,13 @@ def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     ordem_meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
                    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
     df_agrupado['Mês'] = pd.Categorical(df_agrupado['Mês'], categories=ordem_meses, ordered=True)
-    df_agrupado = df_agrupado.sort_values('Mês')
+
+    # Definir ordem dos clusters (0, 1, 2, ...)
+    ordem_clusters = sorted(df_agrupado['Cluster'].unique(), key=lambda x: int(x))
+    df_agrupado['Cluster'] = pd.Categorical(df_agrupado['Cluster'], categories=ordem_clusters, ordered=True)
+
+    # Ordenação final
+    df_agrupado = df_agrupado.sort_values(['Mês', 'Cluster'])
 
     # Criação do gráfico Plotly
     fig = px.bar(
@@ -222,12 +229,17 @@ def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
         x='Mês',
         y='Quantidade',
         color='Cluster',
-        barmode='stack',  # >>> COLUNAS EMPILHADAS
+        barmode='stack',  # Colunas empilhadas
         title='Quantidade de Portarias por Mês e Cluster',
         labels={'Mês': 'Mês', 'Quantidade': 'Quantidade de Portarias'},
         color_discrete_sequence=px.colors.qualitative.Bold
     )
-    fig.update_layout(xaxis_tickangle=-45)
+
+    fig.update_layout(
+        xaxis_tickangle=-45,
+        legend_title_text='Cluster',
+        legend_traceorder="normal"  # Ordem da legenda conforme a ordem definida nos clusters
+    )
 
     st.markdown("### Evolução Mensal das Portarias por Cluster")
     st.plotly_chart(fig, use_container_width=True)
