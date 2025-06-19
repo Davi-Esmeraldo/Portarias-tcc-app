@@ -1,3 +1,5 @@
+# OK 
+
 import streamlit as st
 import json 
 import numpy as np
@@ -385,16 +387,8 @@ texto_data = todas_portarias_maio[numero_portaria]['data']
 st.text(texto_data)
 
 st.markdown("### Conteúdo da portaria selecionada:")
-
-with st.container():
-    st.markdown(
-        f"""
-        <div style="border:1px solid #CCC; padding:10px; height:300px; overflow-y:scroll; background-color:#f9f9f9;">
-        {texto_completo.replace('\n', '<br>')}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+texto_completo = todas_portarias_maio[numero_portaria]['conteudo']
+st.text(texto_completo)
 
 st.markdown("### Descrição da portaria selecionada:")
 texto_resumo = todas_portarias_maio[numero_portaria]["resumo"]
