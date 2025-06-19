@@ -1,4 +1,3 @@
-# OK 
 
 import streamlit as st
 import json 
@@ -68,7 +67,7 @@ def visualizar_anotacoes_manuaais(numero_portaria):
             "end": end,
             "label": entidade["label"]
         })
-    doc = {"text": texto, "ents": ents, "title": f"Anotações Manuais - Portaria {numero_portaria}"}
+    doc = {"text": texto, "ents": ents}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
 
     # Injetando CSS para texto branco
@@ -134,7 +133,7 @@ def visualizar_entidades_preditas(numero_portaria):
                 "label": grupo_label
             })
 
-    doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
+    doc = {"text": texto, "ents": ents}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
 
     # Injetando CSS para texto branco
