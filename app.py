@@ -137,7 +137,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
 
-    # PCA para reduzir para 2 dimensões
+    # PCA
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(X)
 
@@ -145,7 +145,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
     clusters = kmeans.labels_.astype(str)
 
-    # DataFrame para plotagem
+    # Montagem do dataframe
     df_plot = pd.DataFrame({
         'PCA1': X_pca[:, 0],
         'PCA2': X_pca[:, 1],
@@ -153,7 +153,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         'Número': numeros
     })
 
-    # Sinalizar portaria selecionada
+    # Marcação da portaria selecionada
     df_plot['Selecionado'] = df_plot['Número'] == numero_desejado
     df_plot['Tamanho'] = df_plot['Selecionado'].apply(lambda x: 16 if x else 8)
 
@@ -161,9 +161,9 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     ordem_clusters = sorted(df_plot['Cluster'].unique(), key=lambda x: int(x))
     df_plot['Cluster'] = pd.Categorical(df_plot['Cluster'], categories=ordem_clusters, ordered=True)
 
-    # Criação do gráfico base com os clusters
+    # Criação da base do gráfico
     fig = px.scatter(
-        df_plot[~df_plot['Selecionado']],  # Exclui o ponto selecionado do plot base
+        df_plot[~df_plot['Selecionado']],  # Todos exceto o selecionado
         x='PCA1',
         y='PCA2',
         color='Cluster',
@@ -179,7 +179,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         hovertemplate="Portaria: %{customdata[0]}<br>Cluster: %{customdata[1]}<extra></extra>"
     )
 
-    # Adiciona o ponto da portaria selecionada por cima dos demais
+    # Adicionando a portaria selecionada como uma trace separada para garantir que fique na frente
     df_selected = df_plot[df_plot['Selecionado']]
     if not df_selected.empty:
         selected = df_selected.iloc[0]
@@ -187,24 +187,20 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
             x=[selected['PCA1']],
             y=[selected['PCA2']],
             mode='markers+text',
-            marker=dict(
-                size=20,
-                color='red',
-                line=dict(width=3, color='black'),
-                symbol='circle',
-                opacity=1
-            ),
-            name=f"Portaria {selected['Número']}",
+            marker=dict(size=18, color='red', symbol='circle', line=dict(width=2, color='black')),
+            text=[str(selected['Número'])],
+            textposition='top center',
+            name='Selecionado',
             hovertext=f"Portaria: {selected['Número']}<br>Cluster: {selected['Cluster']}",
             hoverinfo='text',
             showlegend=False,
-            text=[selected['Número']],
-            textposition="top center"
+            layer='above'  # <- Isto garante que fique acima
         ))
 
+    # Ajuste de layout
     fig.update_layout(
         legend_title_text='Cluster',
-        legend_traceorder="normal",
+        legend_traceorder="normal"
     )
 
     st.plotly_chart(fig, use_container_width=True)
