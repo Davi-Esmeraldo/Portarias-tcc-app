@@ -60,50 +60,36 @@ def visualizar_anotacoes_manuaais(numero_portaria):
         if start == -1:
             continue
         end = start + len(entidade_texto)
-        idx = end
-        ents.append({
+        idx = end  # atualiza idx para evitar encontrar a mesma substring
+        span = {
             "start": start,
             "end": end,
             "label": entidade["label"]
-        })
+        }
+        ents.append(span)
     doc = {"text": texto, "ents": ents, "title": f"Anotações Manuais - Portaria {numero_portaria}"}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
-    html = html.replace("color: black;", "color: white;")  # Texto branco
     components.html(html, height=300, scrolling=True)
-
 
 
 def visualizar_entidades_preditas(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
-    tokens_labels = resultados_entidades_final[numero_portaria]
-    
+    tokens = texto.split()
     ents = []
     idx = 0
-
-    agrupamento = []
-    for token, label in tokens_labels:
-        entidade = label.split('-')[-1]
-        if agrupamento and agrupamento[-1]['label'] == entidade:
-            agrupamento[-1]['tokens'].append(token)
-        else:
-            agrupamento.append({'label': entidade, 'tokens': [token]})
-
-    for grupo in agrupamento:
-        span_text = ' '.join(grupo['tokens'])
-        start = texto.find(span_text, idx)
+    for token, label in resultados_entidades_final[numero_portaria]:
+        start = texto.find(token, idx)
         if start == -1:
             continue
-        end = start + len(span_text)
+        end = start + len(token)
         idx = end
         ents.append({
             "start": start,
             "end": end,
-            "label": grupo['label']
+            "label": label.split('-')[-1]  # Remove B- ou I-
         })
-
     doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
-    html = html.replace("color: black;", "color: white;")  # Texto branco
     components.html(html, height=300, scrolling=True)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
