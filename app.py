@@ -169,7 +169,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         color='Cluster',
         size='Tamanho',
         custom_data=['Número', 'Cluster'],
-        title="Clusterização das Portarias (KMeans + PCA)",
+        title="Clusterização das Portarias",
         color_discrete_sequence=px.colors.qualitative.Bold,
         category_orders={"Cluster": ordem_clusters}
     )
@@ -369,12 +369,16 @@ def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
 
 # ========== Interface Streamlit ==========
 
-st.title("Visualização e Análise de Portarias")
+st.title("Visualização e Análise das Portarias do Gabinete da Presidência - 2024")
 
 numero_portaria = st.selectbox(
     "Selecione o número da portaria:",
     sorted(todas_portarias_maio.keys(), key=lambda x: int(x), reverse=True)
 )
+
+st.markdown("### Data da portaria selecionada:")
+texto_data = todas_portarias_maio[numero_portaria]['data']
+st.text(texto_data)
 
 st.markdown("### Conteúdo da portaria selecionada:")
 texto_completo = todas_portarias_maio[numero_portaria]['conteudo']
@@ -400,7 +404,7 @@ for idx, row in df_similares.iterrows():
     with st.expander("Ver conteúdo"):
         st.write(row['Conteúdo'])
 
-st.markdown("### Visualização de Clusters:")
+st.markdown("### Visualização dos Clusters:")
 gerar_grafico_clusters_plotly(vetores_fasttext, numero_portaria)
 
 st.markdown("### Nuvens de Palavras por Cluster:")
