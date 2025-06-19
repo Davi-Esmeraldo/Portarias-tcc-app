@@ -1,3 +1,4 @@
+# OK 
 
 import streamlit as st
 import json 
@@ -80,26 +81,59 @@ def visualizar_anotacoes_manuaais(numero_portaria):
     """
     html = style + html
 
-    components.html(html, height=400, scrolling=True)
+    components.html(html, height=300, scrolling=True)
 
 
 
 def visualizar_entidades_preditas(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
+    tokens_labels = resultados_entidades_final[numero_portaria]
+
     tokens = texto.split()
     ents = []
     idx = 0
-    for token, label in resultados_entidades_final[numero_portaria]:
-        start = texto.find(token, idx)
-        if start == -1:
-            continue
-        end = start + len(token)
-        idx = end
-        ents.append({
-            "start": start,
-            "end": end,
-            "label": label.split('-')[-1]  # Remove B- ou I-
-        })
+
+    # Variáveis para agrupar
+    grupo_tokens = []
+    grupo_label = None
+
+    for token, label_full in tokens_labels:
+        label = label_full.split('-')[-1]  # Remove B- ou I-
+
+        if grupo_label is None:
+            grupo_tokens = [token]
+            grupo_label = label
+        elif label == grupo_label:
+            grupo_tokens.append(token)
+        else:
+            # Salva o grupo anterior
+            entidade_texto = ' '.join(grupo_tokens)
+            start = texto.find(entidade_texto, idx)
+            if start != -1:
+                end = start + len(entidade_texto)
+                ents.append({
+                    "start": start,
+                    "end": end,
+                    "label": grupo_label
+                })
+                idx = end
+
+            # Inicia novo grupo
+            grupo_tokens = [token]
+            grupo_label = label
+
+    # Adiciona o último grupo
+    if grupo_tokens:
+        entidade_texto = ' '.join(grupo_tokens)
+        start = texto.find(entidade_texto, idx)
+        if start != -1:
+            end = start + len(entidade_texto)
+            ents.append({
+                "start": start,
+                "end": end,
+                "label": grupo_label
+            })
+
     doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
 
@@ -113,7 +147,7 @@ def visualizar_entidades_preditas(numero_portaria):
     """
     html = style + html
 
-    components.html(html, height=400, scrolling=True)
+    components.html(html, height=300, scrolling=True)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
     if numero_desejado not in vetores_fasttext:
