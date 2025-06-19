@@ -35,7 +35,7 @@ with open("resultados_entidades_final.json", encoding='utf-8') as f:
     resultados_entidades_final = json.load(f)
 
 with open("portarias_ultra_processadas.json", encoding='utf-8') as f:
-    resultados_entidades_final = json.load(f)
+    portarias_ultra_processadas = json.load(f)
 
 
 
