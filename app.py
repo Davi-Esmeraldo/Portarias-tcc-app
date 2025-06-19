@@ -204,8 +204,6 @@ def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
 
 
 
-from collections import Counter
-
 def grafico_trigramas_iniciais_por_cluster(vetores_fasttext, portarias_ultra_processadas, k=3):
     # Clusterização
     numeros = list(vetores_fasttext.keys())
@@ -387,8 +385,7 @@ st.markdown("### Nuvens de Palavras por Cluster:")
 gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio)
 
 st.markdown("## Análise de Trigramas por Cluster")
-gerar_trigramas_por_cluster(vetores_fasttext, portarias_ultra_processadas)
-
+grafico_trigramas_iniciais_por_cluster(vetores_fasttext, portarias_ultra_processadas)
 
 st.markdown("### Evolução Mensal das Portarias por Cluster")
 grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio)
