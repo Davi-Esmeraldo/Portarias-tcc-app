@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json 
 import numpy as np
@@ -137,7 +138,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
 
-    # PCA
+    # PCA para reduzir para 2 dimensões
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(X)
 
@@ -161,7 +162,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     ordem_clusters = sorted(df_plot['Cluster'].unique(), key=lambda x: int(x))
     df_plot['Cluster'] = pd.Categorical(df_plot['Cluster'], categories=ordem_clusters, ordered=True)
 
-    # Criação da base do gráfico
+    # Criando a scatterplot dos pontos gerais (sem o selecionado)
     fig = px.scatter(
         df_plot[~df_plot['Selecionado']],  # Todos exceto o selecionado
         x='PCA1',
@@ -179,7 +180,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         hovertemplate="Portaria: %{customdata[0]}<br>Cluster: %{customdata[1]}<extra></extra>"
     )
 
-    # Adicionando a portaria selecionada como uma trace separada para garantir que fique na frente
+    # Adicionando o ponto da portaria selecionada
     df_selected = df_plot[df_plot['Selecionado']]
     if not df_selected.empty:
         selected = df_selected.iloc[0]
@@ -187,14 +188,13 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
             x=[selected['PCA1']],
             y=[selected['PCA2']],
             mode='markers+text',
-            marker=dict(size=18, color='red', symbol='circle', line=dict(width=2, color='black')),
+            marker=dict(size=22, color='red', symbol='star', line=dict(width=3, color='black')),
             text=[str(selected['Número'])],
             textposition='top center',
-            name='Selecionado',
+            name='Portaria Selecionada',
             hovertext=f"Portaria: {selected['Número']}<br>Cluster: {selected['Cluster']}",
             hoverinfo='text',
-            showlegend=False,
-            layer='above'  # <- Isto garante que fique acima
+            showlegend=False  # Se quiser mostrar na legenda, mude para True
         ))
 
     # Ajuste de layout
