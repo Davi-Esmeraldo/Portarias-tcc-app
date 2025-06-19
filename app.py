@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json 
 import numpy as np
@@ -392,12 +391,12 @@ texto_completo = todas_portarias_maio[numero_portaria]['conteudo']
 st.markdown(
     f"""
     <div style="
-        border:1px solid #CCC;
         padding:10px;
-        height:300px;
-        overflow-y:scroll;
-        background-color:#0E1117;
-        color: white;
+        max-height:300px;
+        overflow-y:auto;
+        background-color:transparent;
+        color:white;
+        line-height:1.5;
         ">
         {texto_completo.replace('\n', '<br>')}
     </div>
