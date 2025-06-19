@@ -1,3 +1,4 @@
+
 import streamlit as st
 import json 
 import numpy as np
@@ -364,7 +365,6 @@ def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
         legend_traceorder="normal"  # Ordem da legenda conforme a ordem definida nos clusters
     )
 
-    st.markdown("### Evolução Mensal das Portarias por Cluster")
     st.plotly_chart(fig, use_container_width=True)
 
 # ========== Interface Streamlit ==========
