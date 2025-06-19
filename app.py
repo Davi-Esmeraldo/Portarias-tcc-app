@@ -204,61 +204,68 @@ def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
 
 
 
-def gerar_trigramas_por_cluster(vetores_fasttext, portarias_ultra_processadas, k=3, top_n=15):
-    # Preparação dos clusters
+from collections import Counter
+
+def grafico_trigramas_iniciais_por_cluster(vetores_fasttext, portarias_ultra_processadas, k=3):
+    # Clusterização
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
-    clusters = kmeans.labels_.astype(str)  # Convertendo para string
+    clusters = kmeans.labels_.astype(str)
 
-    # DataFrame de clusterização
-    df_clusters = pd.DataFrame({
+    # DataFrame base com clusters
+    df = pd.DataFrame({
         'Número': numeros,
         'Cluster': clusters
     })
 
-    # Ordenação dos clusters para legenda
-    ordem_clusters = sorted(df_clusters['Cluster'].unique(), key=lambda x: int(x))
-    df_clusters['Cluster'] = pd.Categorical(df_clusters['Cluster'], categories=ordem_clusters, ordered=True)
+    # Ordenar clusters para garantir ordem na legenda
+    ordem_clusters = sorted(df['Cluster'].unique(), key=lambda x: int(x))
+    df['Cluster'] = pd.Categorical(df['Cluster'], categories=ordem_clusters, ordered=True)
 
-    # Loop por cluster
+    # Agrupar por cluster
     for cluster_id in ordem_clusters:
-        st.markdown(f"### Trigramas mais frequentes - Cluster {cluster_id}")
+        st.markdown(f"### Trigramas dos Primeiros Tokens - Cluster {cluster_id}")
 
-        # Selecionar portarias do cluster atual
-        numeros_cluster = df_clusters[df_clusters['Cluster'] == cluster_id]['Número']
+        numeros_cluster = df[df['Cluster'] == cluster_id]['Número']
 
-        # Concatenar todos os tokens dos conteúdos das portarias do cluster
-        tokens = []
+        # Extração dos trigramas iniciais
+        trigramas = []
         for num in numeros_cluster:
-            if num in portarias_ultra_processadas and 'conteudo' in portarias_ultra_processadas[num]:
-                tokens.extend(portarias_ultra_processadas[num]['conteudo'])
-
-        # Gerar trigramas
-        trigramas = list(zip(tokens, islice(tokens, 1, None), islice(tokens, 2, None)))
-        trigramas_texto = [" ".join(tri) for tri in trigramas]
+            if num in portarias_ultra_processadas:
+                tokens = portarias_ultra_processadas[num]['conteudo']
+                if len(tokens) >= 3:
+                    trigrama = " ".join(tokens[:3])
+                    trigramas.append(trigrama)
 
         # Contagem dos trigramas
-        contador = Counter(trigramas_texto)
-        trigramas_mais_frequentes = contador.most_common(top_n)
+        contador = Counter(trigramas)
+        if not contador:
+            st.write("Sem trigramas disponíveis para este cluster.")
+            continue
 
-        if trigramas_mais_frequentes:
-            df_trigramas = pd.DataFrame(trigramas_mais_frequentes, columns=['Trigrama', 'Frequência'])
+        df_trigramas = pd.DataFrame(contador.items(), columns=['Trigrama', 'Frequência'])
+        df_trigramas = df_trigramas.sort_values(by='Frequência', ascending=False).head(10)  # Top 10 trigramas
 
-            # Criar gráfico Plotly
-            fig = px.bar(
-                df_trigramas,
-                x='Frequência',
-                y='Trigrama',
-                orientation='h',
-                title=f'Trigramas mais frequentes - Cluster {cluster_id}',
-                labels={'Frequência': 'Frequência', 'Trigrama': 'Trigrama'},
-                color_discrete_sequence=['#636EFA']
-            )
-            fig.update_layout(yaxis={'categoryorder': 'total ascending'})
-            st.plotly_chart(fig, use_container_width=True)
-        else:
-            st.write("Não há trigramas suficientes neste cluster.")
+        # Criação do gráfico
+        fig = px.bar(
+            df_trigramas,
+            x='Frequência',
+            y='Trigrama',
+            orientation='h',
+            title=f"Top 10 Trigramas Iniciais - Cluster {cluster_id}",
+            labels={'Frequência': 'Frequência', 'Trigrama': 'Trigrama'},
+            color_discrete_sequence=['#636EFA']  # Azul padrão plotly
+        )
+
+        fig.update_layout(
+            yaxis={'categoryorder':'total ascending'},
+            xaxis_title='Frequência',
+            yaxis_title='Trigrama',
+            height=500
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
 
 def grafico_portarias_mes_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     # Preparação dos clusters
