@@ -81,7 +81,7 @@ def visualizar_anotacoes_manuaais(numero_portaria):
     """
     html = style + html
 
-    components.html(html, height=300, scrolling=False)
+    components.html(html, height=350, scrolling=False)
 
 
 
@@ -147,7 +147,7 @@ def visualizar_entidades_preditas(numero_portaria):
     """
     html = style + html
 
-    components.html(html, height=300, scrolling=False)
+    components.html(html, height=350, scrolling=False)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
     if numero_desejado not in vetores_fasttext:
