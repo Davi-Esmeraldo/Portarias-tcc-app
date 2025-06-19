@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json 
 import numpy as np
@@ -144,9 +143,9 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
 
     # Clusterização
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
-    clusters = kmeans.labels_.astype(str)  # Convertendo para string para tratar como categoria
+    clusters = kmeans.labels_.astype(str)
 
-    # Montagem do dataframe
+    # DataFrame para plotagem
     df_plot = pd.DataFrame({
         'PCA1': X_pca[:, 0],
         'PCA2': X_pca[:, 1],
@@ -158,13 +157,13 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     df_plot['Selecionado'] = df_plot['Número'] == numero_desejado
     df_plot['Tamanho'] = df_plot['Selecionado'].apply(lambda x: 16 if x else 8)
 
-    # Ordenação dos clusters (0,1,2...)
+    # Ordenação dos clusters
     ordem_clusters = sorted(df_plot['Cluster'].unique(), key=lambda x: int(x))
     df_plot['Cluster'] = pd.Categorical(df_plot['Cluster'], categories=ordem_clusters, ordered=True)
 
-    # Criação do gráfico
+    # Criação do gráfico base com os clusters
     fig = px.scatter(
-        df_plot,
+        df_plot[~df_plot['Selecionado']],  # Exclui o ponto selecionado do plot base
         x='PCA1',
         y='PCA2',
         color='Cluster',
@@ -175,34 +174,39 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         category_orders={"Cluster": ordem_clusters}
     )
 
-    # Personalização dos pontos e tooltip
     fig.update_traces(
         marker=dict(symbol='circle', line=dict(width=1, color='DarkSlateGrey')),
         hovertemplate="Portaria: %{customdata[0]}<br>Cluster: %{customdata[1]}<extra></extra>"
     )
 
-    # Destacar portaria selecionada
+    # Adiciona o ponto da portaria selecionada por cima dos demais
     df_selected = df_plot[df_plot['Selecionado']]
     if not df_selected.empty:
         selected = df_selected.iloc[0]
         fig.add_trace(go.Scatter(
             x=[selected['PCA1']],
             y=[selected['PCA2']],
-            mode='markers',
-            marker=dict(size=18, color='red', symbol='circle', line=dict(width=2, color='DarkSlateGrey')),
-            name='Selecionado',
+            mode='markers+text',
+            marker=dict(
+                size=20,
+                color='red',
+                line=dict(width=3, color='black'),
+                symbol='circle',
+                opacity=1
+            ),
+            name=f"Portaria {selected['Número']}",
             hovertext=f"Portaria: {selected['Número']}<br>Cluster: {selected['Cluster']}",
             hoverinfo='text',
-            showlegend=False
+            showlegend=False,
+            text=[selected['Número']],
+            textposition="top center"
         ))
 
-    # Ajuste da legenda
     fig.update_layout(
         legend_title_text='Cluster',
-        legend_traceorder="normal"  # Ordem normal da legenda (seguindo a ordem definida)
+        legend_traceorder="normal",
     )
 
-    # Exibição no Streamlit
     st.plotly_chart(fig, use_container_width=True)
 
 
