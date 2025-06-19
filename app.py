@@ -101,6 +101,17 @@ def visualizar_entidades_preditas(numero_portaria):
         })
     doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
+
+    # Injetando CSS para texto branco
+    style = """
+    <style>
+    body { color: white !important; }
+    .entity { color: white !important; }
+    .entity span { color: white !important; }
+    </style>
+    """
+    html = style + html
+
     components.html(html, height=300, scrolling=True)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
