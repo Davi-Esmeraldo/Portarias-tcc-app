@@ -60,16 +60,27 @@ def visualizar_anotacoes_manuaais(numero_portaria):
         if start == -1:
             continue
         end = start + len(entidade_texto)
-        idx = end  # atualiza idx para evitar encontrar a mesma substring
-        span = {
+        idx = end
+        ents.append({
             "start": start,
             "end": end,
             "label": entidade["label"]
-        }
-        ents.append(span)
+        })
     doc = {"text": texto, "ents": ents, "title": f"Anotações Manuais - Portaria {numero_portaria}"}
     html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
+
+    # Injetando CSS para texto branco
+    style = """
+    <style>
+    body { color: white !important; }
+    .entity { color: white !important; }
+    .entity span { color: white !important; }
+    </style>
+    """
+    html = style + html
+
     components.html(html, height=300, scrolling=True)
+
 
 
 def visualizar_entidades_preditas(numero_portaria):
