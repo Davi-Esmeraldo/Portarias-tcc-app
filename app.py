@@ -1,4 +1,3 @@
-
 import streamlit as st
 import json 
 import numpy as np
@@ -154,7 +153,7 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         'Número': numeros
     })
 
-    # Marcação da portaria selecionada
+    # Sinalizar portaria selecionada
     df_plot['Selecionado'] = df_plot['Número'] == numero_desejado
     df_plot['Tamanho'] = df_plot['Selecionado'].apply(lambda x: 16 if x else 8)
 
@@ -162,9 +161,9 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     ordem_clusters = sorted(df_plot['Cluster'].unique(), key=lambda x: int(x))
     df_plot['Cluster'] = pd.Categorical(df_plot['Cluster'], categories=ordem_clusters, ordered=True)
 
-    # Criando a scatterplot dos pontos gerais (sem o selecionado)
+    # Criação do gráfico base com os clusters
     fig = px.scatter(
-        df_plot[~df_plot['Selecionado']],  # Todos exceto o selecionado
+        df_plot,
         x='PCA1',
         y='PCA2',
         color='Cluster',
@@ -180,27 +179,64 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
         hovertemplate="Portaria: %{customdata[0]}<br>Cluster: %{customdata[1]}<extra></extra>"
     )
 
-    # Adicionando o ponto da portaria selecionada
+    # =============================
+    # ✅ Destaque da portaria selecionada
     df_selected = df_plot[df_plot['Selecionado']]
     if not df_selected.empty:
         selected = df_selected.iloc[0]
+
+        # Adiciona ponto com estrela vermelha
         fig.add_trace(go.Scatter(
             x=[selected['PCA1']],
             y=[selected['PCA2']],
-            mode='markers+text',
-            marker=dict(size=22, color='red', symbol='star', line=dict(width=3, color='black')),
-            text=[str(selected['Número'])],
-            textposition='top center',
+            mode='markers',
+            marker=dict(
+                size=20,
+                color='red',
+                symbol='star',
+                line=dict(width=3, color='black')
+            ),
             name='Portaria Selecionada',
             hovertext=f"Portaria: {selected['Número']}<br>Cluster: {selected['Cluster']}",
             hoverinfo='text',
-            showlegend=False  # Se quiser mostrar na legenda, mude para True
+            showlegend=False
         ))
 
-    # Ajuste de layout
+        # Adiciona annotation com seta e rótulo
+        fig.add_annotation(
+            x=selected['PCA1'],
+            y=selected['PCA2'],
+            text=f"Portaria {selected['Número']}",
+            showarrow=True,
+            arrowhead=2,
+            arrowsize=1,
+            arrowwidth=2,
+            arrowcolor="red",
+            ax=30,
+            ay=-40,
+            font=dict(size=14, color="red"),
+            bgcolor="white",
+            bordercolor="red"
+        )
+
+        # (Opcional) Adiciona um shape de círculo ao redor
+        fig.add_shape(
+            type="circle",
+            xref="x", yref="y",
+            x0=selected['PCA1'] - 0.03, x1=selected['PCA1'] + 0.03,
+            y0=selected['PCA2'] - 0.03, y1=selected['PCA2'] + 0.03,
+            line=dict(color="red", width=3),
+            layer="above"
+        )
+
+    # =============================
+
+    # Ajuste da legenda
     fig.update_layout(
         legend_title_text='Cluster',
-        legend_traceorder="normal"
+        legend_traceorder="normal",
+        title_font_size=20,
+        title_x=0.5
     )
 
     st.plotly_chart(fig, use_container_width=True)
