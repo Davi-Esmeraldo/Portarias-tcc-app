@@ -1,3 +1,4 @@
+# OK 
 
 import streamlit as st
 import json 
@@ -68,32 +69,21 @@ def visualizar_anotacoes_manuaais(numero_portaria):
             "label": entidade["label"]
         })
     doc = {"text": texto, "ents": ents, "title": f"Anotações Manuais - Portaria {numero_portaria}"}
-    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=False)
+    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
 
-    styled_html = f"""
-    <div style="
-        padding:10px;
-        max-height:300px;
-        overflow-y:auto;
-        background-color:transparent;
-        color:white;
-        line-height:1.5;
-        border-radius:10px;
-        ">
-        {html}
-    </div>
+    # Injetando CSS para texto branco
+    style = """
     <style>
-        .entity {{ line-height:1.5; }}
-        mark {{
-            background: #fffd38;
-            padding: 2px 4px;
-            margin: 1px;
-            border-radius: 4px;
-        }}
+    body { color: white !important; }
+    .entity { color: white !important; }
+    .entity span { color: white !important; }
     </style>
     """
+    html = style + html
 
-    components.html(styled_html, height=350, scrolling=False)
+    components.html(html, height=300, scrolling=True)
+
+
 
 def visualizar_entidades_preditas(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
@@ -112,32 +102,19 @@ def visualizar_entidades_preditas(numero_portaria):
             "label": label.split('-')[-1]  # Remove B- ou I-
         })
     doc = {"text": texto, "ents": ents, "title": f"Entidades Preditas - Portaria {numero_portaria}"}
-    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=False)
+    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
 
-    styled_html = f"""
-    <div style="
-        padding:10px;
-        max-height:300px;
-        overflow-y:auto;
-        background-color:transparent;
-        color:white;
-        line-height:1.5;
-        border-radius:10px;
-        ">
-        {html}
-    </div>
+    # Injetando CSS para texto branco
+    style = """
     <style>
-        .entity {{ line-height:1.5; }}
-        mark {{
-            background: #fffd38;
-            padding: 2px 4px;
-            margin: 1px;
-            border-radius: 4px;
-        }}
+    body { color: white !important; }
+    .entity { color: white !important; }
+    .entity span { color: white !important; }
     </style>
     """
+    html = style + html
 
-    components.html(styled_html, height=350, scrolling=False)
+    components.html(html, height=300, scrolling=True)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
     if numero_desejado not in vetores_fasttext:
