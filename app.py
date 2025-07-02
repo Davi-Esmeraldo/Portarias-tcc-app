@@ -32,8 +32,8 @@ with open("portarias_processadas.json", encoding='utf-8') as f:
 with open("dict_combined.json", encoding='utf-8') as f:
     dict_combined = json.load(f)
 
-with open("resultados_entidades_final.json", encoding='utf-8') as f:
-    resultados_entidades_final = json.load(f)
+with open("resultados_entidades_final_final.json", encoding='utf-8') as f:
+    resultados_entidades_final_final = json.load(f)
 
 with open("portarias_ultra_processadas.json", encoding='utf-8') as f:
     portarias_ultra_processadas = json.load(f)
@@ -86,7 +86,7 @@ def visualizar_anotacoes_manuaais(numero_portaria):
 
 def visualizar_entidades_preditas(numero_portaria):
     texto = todas_portarias_maio[numero_portaria]['resumo']
-    tokens_labels = resultados_entidades_final[numero_portaria]
+    tokens_labels = resultados_entidades_final_final[numero_portaria]
 
     tokens = texto.split()
     ents = []
@@ -448,7 +448,7 @@ st.markdown("### Visualização de Entidades:")
 if numero_portaria in dict_combined:
     visualizar_anotacoes_manuaais(numero_portaria)
 
-if numero_portaria in resultados_entidades_final:
+if numero_portaria in resultados_entidades_final_final:
     visualizar_entidades_preditas(numero_portaria)
 
 st.markdown("### Portarias mais similares:")
