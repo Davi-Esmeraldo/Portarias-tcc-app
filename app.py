@@ -254,8 +254,8 @@ import re
 
 def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     # Palavras a remover
-    palavras_remover = {"tribunal", "justiça", "distrito", "federal", "territórios","a", "o", "os", "as", "um", "uma", "uns", "umas","de", "do", "da", "dos", "das","em","no", "na", "nos", "nas", "por", "para", "com", "sem", "sobre","e", "ou", "mas","que", "porque", "como", "se"}
-
+    palavras_remover = {"tribunal", "justiça", "distrito", "federal", "territórios", "a", "o", "os", "as", "um", "uma", "uns", "umas","de", "do", "da", "dos", "das","em","no", "na", "nos", "nas", "por", "para", "com", "sem", "sobre","e", "ou", "mas","que", "porque", "como", "se"}
+    
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
@@ -274,8 +274,8 @@ def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
         ])
 
         # Remove palavras indesejadas (case-insensitive)
-        palavras = re.findall(r'\b\w+\b', textos)
-        palavras_filtradas = [p for p in palavras if p.lower() not in palavras_remover]
+        palavras = re.findall(r'\b\w+\b', textos.lower())
+        palavras_filtradas = [p for p in palavras if p not in palavras_remover]
         textos_limpos = " ".join(palavras_filtradas)
 
         if textos_limpos.strip() != "":
