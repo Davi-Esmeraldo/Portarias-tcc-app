@@ -254,7 +254,7 @@ import re
 
 def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
     # Palavras a remover
-    palavras_remover = {"tribunal", "justiça", "distrito", "federal", "territórios"}
+    palavras_remover = {"tribunal", "justiça", "distrito", "federal", "territórios","a", "o", "os", "as", "um", "uma", "uns", "umas","de", "do", "da", "dos", "das","em","no", "na", "nos", "nas", "por", "para", "com", "sem", "sobre","e", "ou", "mas","que", "porque", "como", "se"}
 
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
