@@ -244,26 +244,48 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     st.plotly_chart(fig, use_container_width=True)
 
 
+from sklearn.cluster import KMeans
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+import streamlit as st
+import numpy as np
+import pandas as pd
+import re
+
 def gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio, k=3):
+    # Palavras a remover
+    palavras_remover = {"tribunal", "justiça", "distrito", "federal", "territórios"}
+
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
     clusters = kmeans.labels_
     df_clusters = pd.DataFrame({'Número': numeros, 'Cluster': clusters})
+
     for cluster_id in sorted(df_clusters['Cluster'].unique()):
         st.markdown(f"#### Nuvem de Palavras - Cluster {cluster_id}")
         numeros_cluster = df_clusters[df_clusters['Cluster'] == cluster_id]['Número']
-        textos = " ".join([todas_portarias_maio[num]['resumo'] for num in numeros_cluster if num in todas_portarias_maio])
-        if textos.strip() != "":
-            wordcloud = WordCloud(width=800, height=400, background_color='white').generate(textos)
+        
+        # Concatena os resumos do cluster
+        textos = " ".join([
+            todas_portarias_maio[num]['resumo']
+            for num in numeros_cluster
+            if num in todas_portarias_maio
+        ])
+
+        # Remove palavras indesejadas (case-insensitive)
+        palavras = re.findall(r'\b\w+\b', textos)
+        palavras_filtradas = [p for p in palavras if p.lower() not in palavras_remover]
+        textos_limpos = " ".join(palavras_filtradas)
+
+        if textos_limpos.strip() != "":
+            wordcloud = WordCloud(width=800, height=400, background_color='white').generate(textos_limpos)
             fig, ax = plt.subplots(figsize=(10, 5))
             ax.imshow(wordcloud, interpolation='bilinear')
             ax.axis('off')
             st.pyplot(fig)
         else:
             st.write("Sem texto suficiente para gerar nuvem.")
-
-
 
 def grafico_trigramas_iniciais_por_cluster(vetores_fasttext, portarias_ultra_processadas, k=3):
     # Clusterização
@@ -284,7 +306,7 @@ def grafico_trigramas_iniciais_por_cluster(vetores_fasttext, portarias_ultra_pro
 
     # Agrupar por cluster
     for cluster_id in ordem_clusters:
-        st.markdown(f"### Trigramas dos Primeiros Tokens - Cluster {cluster_id}")
+        st.markdown(f"### Trigramas da Resolução - Cluster {cluster_id}")
 
         numeros_cluster = df[df['Cluster'] == cluster_id]['Número']
 
