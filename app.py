@@ -23,7 +23,7 @@ from itertools import islice
 with open("todas_portarias_maio.json", encoding='utf-8') as f:
     todas_portarias_maio = json.load(f)
 
-with open("vetores_fasttext.json", encoding='utf-8') as f:
+with open("vetores_Word2vec.json", encoding='utf-8') as f:
     vetores_fasttext = json.load(f)
 
 with open("portarias_processadas.json", encoding='utf-8') as f:
