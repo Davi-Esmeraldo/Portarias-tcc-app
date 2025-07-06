@@ -82,6 +82,18 @@ def visualizar_anotacoes_manuaais(numero_portaria):
 
     components.html(html, height=350, scrolling=False)
 
+import re
+
+def reconstruir(tokens):
+    out = []
+    for t in tokens:
+        if re.fullmatch(r'\W+', t):      # só pontuação
+            out.append(t)                # cola na palavra anterior
+        else:
+            if out and out[-1] not in {',', '.', ';', ':', '!', '?'}:
+                out.append(' ')          # adiciona espaço se o último item não é pontuação
+            out.append(t)
+    return ''.join(out)
 
 
 def visualizar_entidades_preditas(numero_portaria):
