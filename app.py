@@ -297,7 +297,8 @@ def grafico_trigramas_iniciais_por_cluster(vetores_fasttext, portarias_ultra_pro
     # DataFrame base com clusters
     df = pd.DataFrame({
         'Número': numeros,
-        'Cluster': clusters
+        'Cluster': clusters,
+        'Descrição':texto_resumo
     })
 
     # Ordenar clusters para garantir ordem na legenda
