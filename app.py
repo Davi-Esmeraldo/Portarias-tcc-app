@@ -435,7 +435,7 @@ st.title("Visualização e Análise das Portarias do Gabinete da Presidência - 
 
 numero_portaria = st.selectbox(
     "Selecione o número da portaria:",
-    sorted(todas_portarias_maio.keys(), key=lambda x: int(x), reverse=True)
+    sorted(todas_portarias_maio.keys(), key=lambda x: int(x), reverse=False)
 )
 
 st.markdown("### Data da portaria selecionada:")
