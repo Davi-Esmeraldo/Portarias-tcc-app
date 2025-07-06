@@ -294,11 +294,17 @@ def grafico_trigramas_iniciais_por_cluster(vetores_fasttext, portarias_ultra_pro
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
     clusters = kmeans.labels_.astype(str)
 
+    # Texto‑resumo para cada portaria
+    resumos = [
+        todas_portarias_maio[n]['resumo'] if n in todas_portarias_maio else ''
+        for n in numeros
+    ]
+
     # DataFrame base com clusters
     df = pd.DataFrame({
         'Número': numeros,
         'Cluster': clusters,
-        'Descrição':texto_resumo
+        'Descrição':resumos
     })
 
     # Ordenar clusters para garantir ordem na legenda
