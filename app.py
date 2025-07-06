@@ -176,6 +176,11 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(X)
 
+    # Garante que PC2 aponte “para cima”
+    if X_pca[:, 1].mean() < 0:
+        X_pca[:, 1] *= -1
+        pca.components_[1, :] *= -1   # mantém coerência se for usar depois
+    
     # Clusterização
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
     clusters = kmeans.labels_.astype(str)
