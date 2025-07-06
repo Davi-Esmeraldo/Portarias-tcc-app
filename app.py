@@ -85,68 +85,49 @@ def visualizar_anotacoes_manuaais(numero_portaria):
 
 
 def visualizar_entidades_preditas(numero_portaria):
-    texto = todas_portarias_maio[numero_portaria]['resumo']
-    tokens_labels = resultados_entidades_final_final[numero_portaria]
+    texto          = todas_portarias_maio[numero_portaria]['resumo']
+    tokens_labels  = resultados_entidades_final_final[numero_portaria]
 
-    tokens = texto.split()
-    ents = []
-    idx = 0
-
-    # Variáveis para agrupar
-    grupo_tokens = []
-    grupo_label = None
+    ents, idx = [], 0
+    grupo_tokens, grupo_label = [], None
 
     for token, label_full in tokens_labels:
-        label = label_full.split('-')[-1]  # Remove B- ou I-
+        label = label_full.split('-')[-1]      # remove B-/I-, se existir
 
         if grupo_label is None:
-            grupo_tokens = [token]
-            grupo_label = label
+            grupo_tokens, grupo_label = [token], label
         elif label == grupo_label:
             grupo_tokens.append(token)
         else:
-            # Salva o grupo anterior
-            entidade_texto = ' '.join(grupo_tokens)
+            entidade_texto = reconstruir(grupo_tokens)
             start = texto.find(entidade_texto, idx)
             if start != -1:
                 end = start + len(entidade_texto)
-                ents.append({
-                    "start": start,
-                    "end": end,
-                    "label": grupo_label
-                })
+                ents.append({"start": start, "end": end, "label": grupo_label})
                 idx = end
 
-            # Inicia novo grupo
-            grupo_tokens = [token]
-            grupo_label = label
+            grupo_tokens, grupo_label = [token], label
 
-    # Adiciona o último grupo
+    # último grupo
     if grupo_tokens:
-        entidade_texto = ' '.join(grupo_tokens)
+        entidade_texto = reconstruir(grupo_tokens)
         start = texto.find(entidade_texto, idx)
         if start != -1:
             end = start + len(entidade_texto)
-            ents.append({
-                "start": start,
-                "end": end,
-                "label": grupo_label
-            })
+            ents.append({"start": start, "end": end, "label": grupo_label})
 
     doc = {"text": texto, "ents": ents}
-    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
+    html = displacy.render(doc, style="ent", manual=True,
+                           options={"colors": colors}, page=True)
 
-    # Injetando CSS para texto branco
+    # texto branco no Streamlit dark
     style = """
     <style>
-    body { color: white !important; }
-    .entity { color: white !important; }
-    .entity span { color: white !important; }
+      body, .entity, .entity span { color: white !important; }
     </style>
     """
-    html = style + html
+    components.html(style + html, height=350, scrolling=False)
 
-    components.html(html, height=350, scrolling=False)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
     if numero_desejado not in vetores_fasttext:
