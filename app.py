@@ -1,4 +1,4 @@
-
+from sklearn.preprocessing import normalize   
 import streamlit as st
 import json 
 import numpy as np
@@ -170,7 +170,8 @@ def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
     # Preparação dos dados
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
-
+    # Normalização L2  
+    X = normalize(X, norm='l2')
     # PCA para reduzir para 2 dimensões
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(X)
