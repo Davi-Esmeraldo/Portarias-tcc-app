@@ -82,57 +82,49 @@ def visualizar_anotacoes_manuaais(numero_portaria):
 
     components.html(html, height=350, scrolling=False)
 
-import re
-
-def reconstruir(tokens):
-    out = []
-    for t in tokens:
-        if re.fullmatch(r'\W+', t):      # só pontuação
-            out.append(t)                # cola na palavra anterior
-        else:
-            if out and out[-1] not in {',', '.', ';', ':', '!', '?'}:
-                out.append(' ')          # adiciona espaço se o último item não é pontuação
-            out.append(t)
-    return ''.join(out)
-
-
 def visualizar_entidades_preditas(numero_portaria):
-    texto          = todas_portarias_maio[numero_portaria]['resumo']
-    tokens_labels  = resultados_entidades_final_final[numero_portaria]
+    tokens_labels = resultados_entidades_final_final[numero_portaria]
 
-    ents, idx = [], 0
-    grupo_tokens, grupo_label = [], None
+    # Agrupando entidades
+    ents = []
+    grupo_tokens = []
+    grupo_label = None
 
     for token, label_full in tokens_labels:
-        label = label_full.split('-')[-1]      # remove B-/I-, se existir
+        label = label_full.split('-')[-1]
 
         if grupo_label is None:
-            grupo_tokens, grupo_label = [token], label
+            grupo_tokens = [token]
+            grupo_label = label
         elif label == grupo_label:
             grupo_tokens.append(token)
         else:
-            entidade_texto = reconstruir(grupo_tokens)
-            start = texto.find(entidade_texto, idx)
-            if start != -1:
-                end = start + len(entidade_texto)
-                ents.append({"start": start, "end": end, "label": grupo_label})
-                idx = end
+            entidade_texto = ' '.join(grupo_tokens)
+            ents.append({
+                "text": entidade_texto,
+                "label": grupo_label
+            })
+            grupo_tokens = [token]
+            grupo_label = label
 
-            grupo_tokens, grupo_label = [token], label
-
-    # último grupo
+    # Último grupo
     if grupo_tokens:
-        entidade_texto = reconstruir(grupo_tokens)
-        start = texto.find(entidade_texto, idx)
-        if start != -1:
-            end = start + len(entidade_texto)
-            ents.append({"start": start, "end": end, "label": grupo_label})
+        entidade_texto = ' '.join(grupo_tokens)
+        ents.append({
+            "text": entidade_texto,
+            "label": grupo_label
+        })
 
-    doc = {"text": texto, "ents": ents}
+    # Reconstroi texto formatado para display
+    texto_formatado = ' '.join([t for t, _ in tokens_labels])
+
+    doc = {"text": texto_formatado, "ents": [], "title": None}
+    doc['ents'] = ents
+
     html = displacy.render(doc, style="ent", manual=True,
                            options={"colors": colors}, page=True)
 
-    # texto branco no Streamlit dark
+    # CSS para texto branco (modo escuro)
     style = """
     <style>
       body, .entity, .entity span { color: white !important; }
