@@ -479,7 +479,7 @@ st.markdown("### Portarias mais similares:")
 df_similares = encontrar_similares(numero_portaria, vetores_fasttext, todas_portarias_maio)
 df_similares = df_similares.rename(columns={'numero': 'Portaria', 'similaridade': 'Similaridade', 'texto_portaria': 'Conteúdo'})
 for idx, row in df_similares.iterrows():
-    st.write(f"**Portaria:** {row['Portaria']} | **Similaridade:** {row['Similaridade']:.4f}")
+    st.write(f"**Portaria:** {row['Portaria']} | **Similaridade:** {row['Similaridade']:.6f}")
     with st.expander("Ver conteúdo"):
         st.write(row['Conteúdo'])
 
