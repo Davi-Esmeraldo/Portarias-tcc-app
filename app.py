@@ -82,16 +82,22 @@ def visualizar_anotacoes_manuaais(numero_portaria):
 
     components.html(html, height=350, scrolling=False)
 
+
+
 def visualizar_entidades_preditas(numero_portaria):
+    texto = todas_portarias_maio[numero_portaria]['resumo']
     tokens_labels = resultados_entidades_final_final[numero_portaria]
 
-    # Agrupando entidades
+    tokens = texto.split()
     ents = []
+    idx = 0
+
+    # Variáveis para agrupar
     grupo_tokens = []
     grupo_label = None
 
     for token, label_full in tokens_labels:
-        label = label_full.split('-')[-1]
+        label = label_full.split('-')[-1]  # Remove B- ou I-
 
         if grupo_label is None:
             grupo_tokens = [token]
@@ -99,39 +105,48 @@ def visualizar_entidades_preditas(numero_portaria):
         elif label == grupo_label:
             grupo_tokens.append(token)
         else:
+            # Salva o grupo anterior
             entidade_texto = ' '.join(grupo_tokens)
-            ents.append({
-                "text": entidade_texto,
-                "label": grupo_label
-            })
+            start = texto.find(entidade_texto, idx)
+            if start != -1:
+                end = start + len(entidade_texto)
+                ents.append({
+                    "start": start,
+                    "end": end,
+                    "label": grupo_label
+                })
+                idx = end
+
+            # Inicia novo grupo
             grupo_tokens = [token]
             grupo_label = label
 
-    # Último grupo
+    # Adiciona o último grupo
     if grupo_tokens:
         entidade_texto = ' '.join(grupo_tokens)
-        ents.append({
-            "text": entidade_texto,
-            "label": grupo_label
-        })
+        start = texto.find(entidade_texto, idx)
+        if start != -1:
+            end = start + len(entidade_texto)
+            ents.append({
+                "start": start,
+                "end": end,
+                "label": grupo_label
+            })
 
-    # Reconstroi texto formatado para display
-    texto_formatado = ' '.join([t for t, _ in tokens_labels])
+    doc = {"text": texto, "ents": ents}
+    html = displacy.render(doc, style="ent", manual=True, options={"colors": colors}, page=True)
 
-    doc = {"text": texto_formatado, "ents": [], "title": None}
-    doc['ents'] = ents
-
-    html = displacy.render(doc, style="ent", manual=True,
-                           options={"colors": colors}, page=True)
-
-    # CSS para texto branco (modo escuro)
+    # Injetando CSS para texto branco
     style = """
     <style>
-      body, .entity, .entity span { color: white !important; }
+    body { color: white !important; }
+    .entity { color: white !important; }
+    .entity span { color: white !important; }
     </style>
     """
-    components.html(style + html, height=350, scrolling=False)
+    html = style + html
 
+    components.html(html, height=350, scrolling=False)
 
 def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio, top_n=10):
     if numero_desejado not in vetores_fasttext:
