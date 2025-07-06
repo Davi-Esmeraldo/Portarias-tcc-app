@@ -166,91 +166,79 @@ def encontrar_similares(numero_desejado, vetores_fasttext, todas_portarias_maio,
     df['texto_portaria'] = textos
     return df[['numero', 'similaridade', 'texto_portaria']]
 
-def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, todas_portarias_maio, k=3):
-    # ===== Preparação dos dados =====
+def gerar_grafico_clusters_plotly(vetores_fasttext, numero_desejado, k=3):
+    # Preparação dos dados
     numeros = list(vetores_fasttext.keys())
     X = np.array([vetores_fasttext[n] for n in numeros])
 
-    # Texto‑resumo para cada portaria
-    resumos = [
-        todas_portarias_maio[n]['resumo'] if n in todas_portarias_maio else ''
-        for n in numeros
-    ]
-
-    # ===== Redução de dimensionalidade =====
+    # PCA para reduzir para 2 dimensões
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(X)
 
-    # ===== Clusterização =====
+    # Clusterização
     kmeans = KMeans(n_clusters=k, random_state=42).fit(X)
     clusters = kmeans.labels_.astype(str)
 
-    # ===== DataFrame para plotagem =====
+    # DataFrame para plotagem
     df_plot = pd.DataFrame({
         'PCA1': X_pca[:, 0],
         'PCA2': X_pca[:, 1],
         'Cluster': clusters,
-        'Número': numeros,
-        'Resumo': resumos
+        'Número': numeros
     })
 
-    # Destacar portaria selecionada
+    # Sinalizar portaria selecionada
     df_plot['Selecionado'] = df_plot['Número'] == numero_desejado
     df_plot['Tamanho'] = df_plot['Selecionado'].apply(lambda x: 16 if x else 8)
 
-    # Ordem dos clusters (0, 1, 2…)
+    # Ordenação dos clusters
     ordem_clusters = sorted(df_plot['Cluster'].unique(), key=lambda x: int(x))
-    df_plot['Cluster'] = pd.Categorical(df_plot['Cluster'],
-                                        categories=ordem_clusters,
-                                        ordered=True)
+    df_plot['Cluster'] = pd.Categorical(df_plot['Cluster'], categories=ordem_clusters, ordered=True)
 
-    # ===== Gráfico base =====
+    # Criação do gráfico base com os clusters
     fig = px.scatter(
-        df_plot[~df_plot['Selecionado']],
+        df_plot[~df_plot['Selecionado']],  # Exclui o ponto selecionado do plot base
         x='PCA1',
         y='PCA2',
         color='Cluster',
         size='Tamanho',
-        custom_data=['Número', 'Cluster', 'Resumo'],
+        custom_data=['Número', 'Cluster'],
         title="Clusterização das Portarias",
         color_discrete_sequence=px.colors.qualitative.Bold,
         category_orders={"Cluster": ordem_clusters}
     )
 
     fig.update_traces(
-        marker=dict(symbol='circle',
-                    line=dict(width=1, color='DarkSlateGrey')),
-        hovertemplate=(
-            "<b>Portaria:</b> %{customdata[0]}<br>"
-            "<b>Cluster:</b> %{customdata[1]}<br>"
-            "<b>Resumo:</b> %{customdata[2]|%.120s}..."  # mostra até 120 carac.
-            "<extra></extra>"
-        )
+        marker=dict(symbol='circle', line=dict(width=1, color='DarkSlateGrey')),
+        hovertemplate="Portaria: %{customdata[0]}<br>Cluster: %{customdata[1]}<extra></extra>"
     )
 
-    # ===== Ponto da portaria selecionada =====
-    if df_plot['Selecionado'].any():
-        sel = df_plot[df_plot['Selecionado']].iloc[0]
+    # Adiciona o ponto da portaria selecionada por cima dos demais
+    df_selected = df_plot[df_plot['Selecionado']]
+    if not df_selected.empty:
+        selected = df_selected.iloc[0]
         fig.add_trace(go.Scatter(
-            x=[sel['PCA1']], y=[sel['PCA2']],
+            x=[selected['PCA1']],
+            y=[selected['PCA2']],
             mode='markers+text',
-            marker=dict(size=20, color='red',
-                        line=dict(width=3, color='black')),
-            name=f"Portaria {sel['Número']}",
-            customdata=[[sel['Número'], sel['Cluster'], sel['Resumo']]],
-            hovertemplate=(
-                "<b>Portaria:</b> %{customdata[0]}<br>"
-                "<b>Cluster:</b> %{customdata[1]}<br>"
-                "<b>Resumo:</b> %{customdata[2]}<extra></extra>"
+            marker=dict(
+                size=20,
+                color='red',
+                line=dict(width=3, color='black'),
+                symbol='circle',
+                opacity=1
             ),
+            name=f"Portaria {selected['Número']}",
+            hovertext=f"Portaria: {selected['Número']}<br>Cluster: {selected['Cluster']}",
+            hoverinfo='text',
             showlegend=False,
-            text=[sel['Número']],
+            text=[selected['Número']],
             textposition="top center"
         ))
 
     fig.update_layout(
         legend_title_text='Cluster',
-        legend_traceorder="normal"
+        legend_traceorder="normal",
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -495,7 +483,7 @@ for idx, row in df_similares.iterrows():
         st.write(row['Conteúdo'])
 
 st.markdown("### Visualização dos Clusters:")
-gerar_grafico_clusters_plotly(vetores_fasttext, numero_portaria, todas_portarias_maio)
+gerar_grafico_clusters_plotly(vetores_fasttext, numero_portaria)
 
 st.markdown("### Nuvens de Palavras por Cluster:")
 gerar_nuvem_por_cluster(vetores_fasttext, todas_portarias_maio)
