@@ -11637,5 +11637,26 @@
                 "label": "LOCAL"
             }
         ]
-    }
+    },
+        "1963": {
+            "text": "Exonera, a pedido, Claudia Cruz Cerquinho de Oliveira do cargo de juíza de paz 1ª suplente do 3º Ofício de Registro Civil, Títulos e Documentos e Pessoas Jurídicas do Paranoá.",
+            "labels": [
+                {
+                    "text": "Exonera",
+                    "label": "ACAO"
+                },
+                {
+                    "text": "Claudia Cruz Cerquinho de Oliveira",
+                    "label": "PESSOA"
+                },
+                {
+                    "text": "do cargo de juíza de paz 1ª suplente",
+                    "label": "ACAO"
+                },
+                {
+                    "text": "3º Ofício de Registro Civil, Títulos e Documentos e Pessoas Jurídicas do Paranoá",
+                    "label": "LOCAL"
+                }
+            ]
+        }
 }
